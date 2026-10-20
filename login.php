@@ -27,6 +27,7 @@ if ($result->num_rows > 0) {
                 "email" => $user['email'],
                 "role" => $user['role']
             ]
+                "user_id" => $conn->insert_id
         ]);
     } else {
         echo json_encode(["success" => false, "message" => "Incorrect password"]);
