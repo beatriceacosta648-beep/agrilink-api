@@ -18,7 +18,7 @@ if ($userId <= 0 \vert{}\vert{}$region === '' || $province === '' \vert{}\vert{}
 }
 
 // Ensure the table name ('addresses' or 'address') matches your database exactly
-\$sql = "INSERT INTO addresses (user_id, `Region`, `Province`, `City/Municipality`, `Barangay`, `Home Address`)
+\$sql = "INSERT INTO address (user_id, `Region`, `Province`, `City/Municipality`, `Barangay`, `Home Address`)
         VALUES (?, ?, ?, ?, ?, ?)";
 
 try {
