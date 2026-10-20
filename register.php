@@ -26,7 +26,7 @@ $sql = "INSERT INTO users (full_name, email, password, role, phone_num)
         VALUES ('$full_name', '$email', '$password', '$role', NULL)";
 
 if ($conn->query($sql)) {
-    echo json_encode(["success" => true, "message" => "Account created" "user_id" => $conn->insert_id]);
+    echo json_encode(["success" => true, "message" => "Account created", "user_id" => $conn->insert_id]);
 } else {
     echo json_encode(["success" => false, "message" => $conn->error]);
 }
