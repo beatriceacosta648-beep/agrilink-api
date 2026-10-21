@@ -107,7 +107,7 @@ try {
 
     // If address_id is provided, verify it exists in the database
     if ($addressId > 0) {
-        $addrStmt = $conn->prepare("SELECT address_id FROM addresses WHERE address_id = ?");
+        $addrStmt = $conn->prepare("SELECT address_id FROM address WHERE address_id = ?");
         $addrStmt->bind_param("i", $addressId);
         $addrStmt->execute();
         $addrRes = $addrStmt->get_result();
