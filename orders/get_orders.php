@@ -41,4 +41,58 @@ try {
     ";
 
     if ($status !== '') {
-        $sql .= " AND o.
+        $sql .= " AND o.order_status = ? ";
+    }
+
+    $sql .= "
+        GROUP BY
+            o.order_id,
+            o.total_amount,
+            o.order_status,
+            o.payment_status,
+            o.estimated_delivery_date,
+            o.created_at
+        ORDER BY
+            o.created_at DESC,
+            o.order_id DESC
+    ";
+
+    $stmt = $conn->prepare($sql);
+
+    if ($status !== '') {
+        $stmt->bind_param("is", $userId, $status);
+    } else {
+        $stmt->bind_param("i", $userId);
+    }
+
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $orders = [];
+
+    while ($row = $result->fetch_assoc()) {
+
+        $row['order_id'] = (int)$row['order_id'];
+        $row['item_count'] = (int)$row['item_count'];
+
+        $orders[] = $row;
+    }
+
+    echo json_encode([
+        "success" => true,
+        "count" => count($orders),
+        "orders" => $orders
+    ]);
+
+    $stmt->close();
+
+} catch (Throwable $e) {
+
+    error_log("get_orders.php: " . $e->getMessage());
+
+    fail("Hindi makuha ang mga order.");
+}
+
+$conn->close();
+?>
