@@ -219,7 +219,7 @@ try {
 
     echo json_encode([
         "success" => false,
-        "message" => "Hindi ma-update ang order."
+        "message" => "Error: " . $e->getMessage()
     ]);
 
 } finally {
