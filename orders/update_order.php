@@ -23,6 +23,7 @@ try {
     );
 
     $orderId = (int)($input['order_id'] ?? 0);
+    $addressId = isset($input['address_id']) ? (int)$input['address_id'] : 0;
 
     $orderStatus = strtolower(trim($input['order_status'] ?? ''));
     $paymentStatus = strtolower(trim($input['payment_status'] ?? ''));
@@ -104,9 +105,28 @@ try {
         );
     }
 
+    // If address_id is provided, verify it exists in the database
+    if ($addressId > 0) {
+        $addrStmt = $conn->prepare("SELECT address_id FROM addresses WHERE address_id = ?");
+        $addrStmt->bind_param("i", $addressId);
+        $addrStmt->execute();
+        $addrRes = $addrStmt->get_result();
+        $addrStmt->close();
+
+        if ($addrRes->num_rows === 0) {
+            fail("Ang ibinigay na address_id ay hindi umiiral.");
+        }
+    }
+
     $setParts = [];
     $types = '';
     $values = [];
+
+    if ($addressId > 0) {
+        $setParts[] = "address_id = ?";
+        $types .= "i";
+        $values[] = $addressId;
+    }
 
     if ($orderStatus !== '') {
         $setParts[] = "order_status = ?";
@@ -159,10 +179,11 @@ try {
     $stmt->execute();
     $stmt->close();
 
-    // Fetch updated order
+    // Fetch updated order (including address_id)
     $stmt = $conn->prepare("
         SELECT
             order_id,
+            address_id,
             order_status,
             payment_status,
             date_paid,
@@ -181,6 +202,7 @@ try {
 
     if ($order) {
         $order['order_id'] = (int)$order['order_id'];
+        $order['address_id'] = (int)$order['address_id'];
     }
 
     echo json_encode([
