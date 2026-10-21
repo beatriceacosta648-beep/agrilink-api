@@ -12,10 +12,21 @@ $city     = trim($data['city'] ?? '');
 $barangay = trim($data['barangay'] ?? '');
 $street   = trim($data['street'] ?? '');
 
-if ($userId <= 0 \vert{}\vert{}$region === '' || $province === '' \vert{}\vert{}$city === '' || $barangay === '' \vert{}\vert{}$street === '') {
-    echo json_encode(["success" => false, "message" => "Kulang ang impormasyon."]);
+if (
+    $userId <= 0 ||
+    $region === '' ||
+    $province === '' ||
+    $city === '' ||
+    $barangay === '' ||
+    $street === ''
+) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Kulang ang impormasyon."
+    ]);
     exit;
 }
+
 
 $sql = "INSERT INTO address (user_id, `Region`, `Province`, `City/Municipality`, `Barangay`, `Home Address`)
         VALUES (?, ?, ?, ?, ?, ?)";
