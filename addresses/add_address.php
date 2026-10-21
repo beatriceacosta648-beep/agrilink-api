@@ -12,6 +12,7 @@ $city     = trim($data['city'] ?? '');
 $barangay = trim($data['barangay'] ?? '');
 $street   = trim($data['street'] ?? '');
 
+/* Validate required fields */
 if (
     $userId <= 0 ||
     $region === '' ||
@@ -27,29 +28,60 @@ if (
     exit;
 }
 
-
-$sql = "INSERT INTO address (user_id, `Region`, `Province`, `City/Municipality`, `Barangay`, `Home Address`)
+$sql = "INSERT INTO address (
+            user_id,
+            `Region`,
+            `Province`,
+            `City/Municipality`,
+            `Barangay`,
+            `Home Address`
+        )
         VALUES (?, ?, ?, ?, ?, ?)";
 
 try {
-    $stmt =$conn->prepare($sql);$stmt->bind_param("isssss", $userId,$region, $province,$city, $barangay,$street);
+
+    $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        throw new Exception($conn->error);
+    }
+
+    $stmt->bind_param(
+        "isssss",
+        $userId,
+        $region,
+        $province,
+        $city,
+        $barangay,
+        $street
+    );
 
     if ($stmt->execute()) {
+
         echo json_encode([
             "success" => true,
             "message" => "Na-save ang address.",
-            "address_id" => \$conn->insert_id
+            "address_id" => $conn->insert_id
         ]);
+
     } else {
-        echo json_encode(["success" => false, "message" => "Hindi na-save ang address."]);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Hindi na-save ang address."
+        ]);
+
     }
-    
+
     $stmt->close();
-} catch (mysqli_sql_exception \$e) {
+
+} catch (Exception $e) {
+
     echo json_encode([
-        "success" => false, 
-        "message" => "Database error: " . \$e->getMessage()
+        "success" => false,
+        "message" => "Database error: " . $e->getMessage()
     ]);
+
 }
 
 $conn->close();
