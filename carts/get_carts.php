@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-include 'db_connect.php';
+include '../db_connect.php';
 
 function fail($message) {
     echo json_encode(["success" => false, "message" => $message]);
