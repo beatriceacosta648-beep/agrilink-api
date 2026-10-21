@@ -1,6 +1,6 @@
 <?php
 header("Content-Type: application/json");
-require_once "db_connect.php";
+require_once "../db_connect.php";
 
 try {
     // 1. Correct query with INNER JOIN to get category_name
