@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 // Make mysqli throw exceptions so the transaction can roll back on any failure
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
  
-include 'db_connect.php';
+include '../db_connect.php';
  
 function fail($message) {
     echo json_encode(["success" => false, "message" => $message]);
