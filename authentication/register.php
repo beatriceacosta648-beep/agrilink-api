@@ -4,7 +4,6 @@ include '../db_connect.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Reject empty/invalid requests (e.g. opening this URL in a browser)
 if (!$data || empty($data['full_name']) || empty($data['email']) || empty($data['password'])) {
     echo json_encode(["success" => false, "message" => "Missing required fields"]);
     exit;
@@ -13,7 +12,7 @@ if (!$data || empty($data['full_name']) || empty($data['email']) || empty($data[
 $full_name = $conn->real_escape_string($data['full_name']);
 $email = $conn->real_escape_string($data['email']);
 $password = password_hash($data['password'], PASSWORD_DEFAULT);
-$role = 'buyer'; // this screen only creates normal user accounts
+$role = 'buyer';
 
 // Prevent duplicate emails
 $check = $conn->query("SELECT * FROM users WHERE email = '$email'");
