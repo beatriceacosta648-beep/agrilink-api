@@ -2,48 +2,39 @@
 header("Content-Type: application/json");
 require_once "../db_connect.php";
 
-// Accept item_id from GET query parameter or JSON body
-$itemId = isset($_GET['item_id']) ? (int)$_GET['item_id'] : 0;
+$data = json_decode(file_get_contents("php://input"), true);
 
-if ($itemId <= 0) {
-    echo json_encode(["status" => "error", "message" => "Valid item_id is required."]);
+$itemId       = isset($data['item_id']) ? (int)$data['item_id'] : 0;
+$itemName     = trim($data['item_name'] ?? '');
+$description  = trim($data['description'] ?? '');
+$categoryId   = isset($data['category_id']) ? (int)$data['category_id'] : 0;
+$unitPrice    = isset($data['unit_price']) ? (float)$data['unit_price'] : 0.0;
+$stockQuantity= isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : 0;
+$imageUrl     = trim($data['image_url'] ?? '');
+$imageUrl     = ($imageUrl === '') ? null : $imageUrl;   // not sent = keep the existing image
+
+if ($itemId <= 0 || $itemName === '' || $categoryId <= 0 || $unitPrice <= 0) {
+    echo json_encode(["success" => false, "message" => "Invalid parameters for update."]);
     exit;
 }
 
+$sql = "UPDATE items 
+        SET item_name = ?, description = ?, category_id = ?, unit_price = ?, stock_quantity = ?,
+            image_url = COALESCE(?, image_url) 
+        WHERE item_id = ?";
+
 try {
-    $sql = "SELECT 
-                i.item_id, 
-                i.item_name, 
-                i.description, 
-                i.unit_price, 
-                i.stock_quantity,
-                i.image_url,
-                c.category_id,
-                c.category_name
-            FROM items i
-            LEFT JOIN category c ON i.category_id = c.category_id
-            WHERE i.item_id = ?";
-
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $itemId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt->bind_param("ssidisi", $itemName, $description, $categoryId, $unitPrice, $stockQuantity, $imageUrl, $itemId);
 
-    if ($row = $result->fetch_assoc()) {
-        $row['item_id'] = (int)$row['item_id'];
-        $row['unit_price'] = (float)$row['unit_price'];
-        $row['stock_quantity'] = (int)$row['stock_quantity'];
-
-        echo json_encode([
-            "status" => "success",
-            "data" => $row
-        ]);
+    if ($stmt->execute()) {
+        echo json_encode(["success" => true, "message" => "Item updated successfully."]);
     } else {
-        echo json_encode(["status" => "error", "message" => "Item not found."]);
+        echo json_encode(["success" => false, "message" => "Failed to update item."]);
     }
     $stmt->close();
-} catch (Exception $e) {
-    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+} catch (mysqli_sql_exception $e) {
+    echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
 }
 
 $conn->close();
