@@ -10,6 +10,7 @@ try {
                 i.description, 
                 i.unit_price, 
                 i.stock_quantity,
+                i.image_url,
                 c.category_id,
                 c.category_name
             FROM items i
