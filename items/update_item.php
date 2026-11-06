@@ -10,6 +10,8 @@ $description  = trim($data['description'] ?? '');
 $categoryId   = isset($data['category_id']) ? (int)$data['category_id'] : 0;
 $unitPrice    = isset($data['unit_price']) ? (float)$data['unit_price'] : 0.0;
 $stockQuantity= isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : 0;
+$imageUrl     = trim($data['image_url'] ?? '');
+$imageUrl     = ($imageUrl === '') ? null : $imageUrl;   // not sent = keep the existing image
 
 if ($itemId <= 0 || $itemName === '' || $categoryId <= 0 || $unitPrice <= 0) {
     echo json_encode(["success" => false, "message" => "Invalid parameters for update."]);
@@ -17,12 +19,13 @@ if ($itemId <= 0 || $itemName === '' || $categoryId <= 0 || $unitPrice <= 0) {
 }
 
 $sql = "UPDATE items 
-        SET item_name = ?, description = ?, category_id = ?, unit_price = ?, stock_quantity = ? 
+        SET item_name = ?, description = ?, category_id = ?, unit_price = ?, stock_quantity = ?,
+            image_url = COALESCE(?, image_url) 
         WHERE item_id = ?";
 
 try {
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssidii", $itemName, $description, $categoryId, $unitPrice, $stockQuantity, $itemId);
+    $stmt->bind_param("ssidisi", $itemName, $description, $categoryId, $unitPrice, $stockQuantity, $imageUrl, $itemId);
 
     if ($stmt->execute()) {
         echo json_encode(["success" => true, "message" => "Item updated successfully."]);
