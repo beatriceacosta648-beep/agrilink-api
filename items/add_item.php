@@ -9,18 +9,20 @@ $description  = trim($data['description'] ?? '');
 $categoryId   = isset($data['category_id']) ? (int)$data['category_id'] : 0;
 $unitPrice    = isset($data['unit_price']) ? (float)$data['unit_price'] : 0.0;
 $stockQuantity= isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : 0;
+$imageUrl     = trim($data['image_url'] ?? '');
+$imageUrl     = ($imageUrl === '') ? null : $imageUrl;   // empty means no image (stored as NULL)
 
 if ($itemName === '' || $categoryId <= 0 || $unitPrice <= 0) {
     echo json_encode(["success" => false, "message" => "Invalid item details provided."]);
     exit;
 }
 
-$sql = "INSERT INTO items (item_name, description, category_id, unit_price, stock_quantity) 
-        VALUES (?, ?, ?, ?, ?)";
+$sql = "INSERT INTO items (item_name, description, category_id, unit_price, stock_quantity, image_url) 
+        VALUES (?, ?, ?, ?, ?, ?)";
 
 try {
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssidi", $itemName, $description, $categoryId, $unitPrice, $stockQuantity);
+    $stmt->bind_param("ssidis", $itemName, $description, $categoryId, $unitPrice, $stockQuantity, $imageUrl);
 
     if ($stmt->execute()) {
         echo json_encode([
