@@ -57,8 +57,8 @@ try {
 
     $stmt = $conn->prepare(
         "SELECT ci.cart_items_id, ci.item_id, i.item_name, ci.quantity,
-                $priceCol AS unit_price, i.stock_quantity,
-                (ci.quantity * $priceCol) AS subtotal
+        $priceCol AS unit_price, i.stock_quantity, i.image_url,
+        (ci.quantity * $priceCol) AS subtotal
          FROM cart_items ci
          JOIN items i ON i.item_id = ci.item_id
          WHERE ci.cart_id = ?
