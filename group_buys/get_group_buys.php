@@ -59,6 +59,12 @@ try {
         $types .= 'i';
         $params[] = $groupId;
     }
+    if ($joinedOnly) {
+    $sql .= " AND EXISTS (SELECT 1 FROM group_members gmj
+                          WHERE gmj.group_id = g.group_id AND gmj.user_id = ?)";
+    $types .= 'i';
+    $params[] = $userId;
+}
     if ($barangay !== '') {
         $sql .= " AND g.barangay = ?";
         $types .= 's';
