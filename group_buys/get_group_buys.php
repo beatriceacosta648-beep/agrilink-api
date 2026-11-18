@@ -16,6 +16,7 @@ $itemId   = (int)($in['item_id'] ?? 0);
 $barangay = trim($in['barangay'] ?? '');
 $city     = trim($in['city_municipality'] ?? '');
 $status   = trim($in['status'] ?? GROUP_OPEN);
+$joinedOnly = ($userId > 0 && !empty($in['joined_only']));
 
 if ($status !== 'all' && !in_array($status, group_statuses(), true)) {
     fail("Hindi tama ang status.");
