@@ -2,12 +2,13 @@
 include 'group_helpers.php';
 include '../db_connect.php';
 
-// JSON body: { "user_id": 1, "group_id": 5, "quantity": 2 }
+// JSON body: { "user_id": 1, "group_id": 5, "quantity": 2, "group_buy_items_id": 7 (optional) }
 $in = input();
 
-$userId  = (int)($in['user_id'] ?? 0);
-$groupId = (int)($in['group_id'] ?? 0);
-$qty     = (int)($in['quantity'] ?? 0);
+$userId    = (int)($in['user_id'] ?? 0);
+$groupId   = (int)($in['group_id'] ?? 0);
+$qty       = (int)($in['quantity'] ?? 0);
+$itemRowId = (int)($in['group_buy_items_id'] ?? 0);
 
 if ($userId <= 0 || $groupId <= 0) {
     fail("Kulang ang impormasyon.");
@@ -17,7 +18,7 @@ if ($qty < 1) {
 }
 
 try {
-    expire_old_groups($conn);          // mark late pools as expired first
+    expire_old_groups($conn);
     $conn->begin_transaction();
 
     if (!user_exists($conn, $userId)) {
@@ -45,9 +46,35 @@ try {
         throw new RuntimeException("Ang natitira na lang ay $remaining.");
     }
 
-    // Already a member? add to their quantity. Otherwise create the row.
-    $stmt = $conn->prepare("SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ? LIMIT 1");
-    $stmt->bind_param("ii", $groupId, $userId);
+    // Which pool item is being joined?
+    if ($itemRowId > 0) {
+        $stmt = $conn->prepare(
+            "SELECT group_buy_items_id FROM group_buy_items
+             WHERE group_buy_items_id = ? AND group_id = ?"
+        );
+        $stmt->bind_param("ii", $itemRowId, $groupId);
+    } else {
+        // none given: use the first item of the pool
+        $stmt = $conn->prepare(
+            "SELECT group_buy_items_id FROM group_buy_items
+             WHERE group_id = ? ORDER BY group_buy_items_id LIMIT 1"
+        );
+        $stmt->bind_param("i", $groupId);
+    }
+    $stmt->execute();
+    $itemRow = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$itemRow) {
+        throw new RuntimeException("Walang item ang pool na ito.");
+    }
+    $itemRowId = (int)$itemRow['group_buy_items_id'];
+
+    // Already joined this item? add to the quantity. Otherwise create the row.
+    $stmt = $conn->prepare(
+        "SELECT 1 FROM group_members
+         WHERE group_id = ? AND user_id = ? AND group_buy_items_id = ? LIMIT 1"
+    );
+    $stmt->bind_param("iii", $groupId, $userId, $itemRowId);
     $stmt->execute();
     $already = $stmt->get_result()->fetch_assoc();
     $stmt->close();
@@ -55,14 +82,15 @@ try {
     if ($already) {
         $stmt = $conn->prepare(
             "UPDATE group_members SET quantity_commited = quantity_commited + ?
-             WHERE group_id = ? AND user_id = ? LIMIT 1"
+             WHERE group_id = ? AND user_id = ? AND group_buy_items_id = ? LIMIT 1"
         );
-        $stmt->bind_param("iii", $qty, $groupId, $userId);
+        $stmt->bind_param("iiii", $qty, $groupId, $userId, $itemRowId);
     } else {
         $stmt = $conn->prepare(
-            "INSERT INTO group_members (group_id, user_id, quantity_commited) VALUES (?, ?, ?)"
+            "INSERT INTO group_members (group_id, user_id, group_buy_items_id, quantity_commited)
+             VALUES (?, ?, ?, ?)"
         );
-        $stmt->bind_param("iii", $groupId, $userId, $qty);
+        $stmt->bind_param("iiii", $groupId, $userId, $itemRowId, $qty);
     }
     $stmt->execute();
     $stmt->close();
@@ -87,14 +115,15 @@ try {
     $conn->commit();
 
     echo json_encode([
-        "success"          => true,
-        "message"          => ($newStatus === GROUP_UNLOCKED)
-                                ? "Nasali ka na! Na-unlock na ang pool price."
-                                : "Nasali ka na sa pool.",
-        "group_id"         => $groupId,
-        "my_quantity"      => $mine,
-        "current_quantity" => $newQty,
-        "status"           => $newStatus
+        "success"            => true,
+        "message"            => ($newStatus === GROUP_UNLOCKED)
+                                  ? "Nasali ka na! Na-unlock na ang pool price."
+                                  : "Nasali ka na sa pool.",
+        "group_id"           => $groupId,
+        "group_buy_items_id" => $itemRowId,
+        "my_quantity"        => $mine,
+        "current_quantity"   => $newQty,
+        "status"             => $newStatus
     ]);
 
 } catch (mysqli_sql_exception $e) {
