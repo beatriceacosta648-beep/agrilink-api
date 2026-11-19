@@ -100,12 +100,12 @@ try {
 } catch (mysqli_sql_exception $e) {
     $conn->rollback();
     error_log("join_group_buy.php: " . $e->getMessage());
-    fail("Hindi makasali sa group buy.");
+    fail("Hindi makasali sa group buy.", ["debug" => $e->getMessage()]);
 } catch (RuntimeException $e) {
     $conn->rollback();
     fail($e->getMessage());
 } catch (Throwable $e) {
     $conn->rollback();
     error_log("join_group_buy.php: " . $e->getMessage());
-    fail("Hindi makasali sa group buy.");
+    fail("Hindi makasali sa group buy.", ["debug" => $e->getMessage()]);
 }
