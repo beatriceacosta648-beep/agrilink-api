@@ -25,14 +25,18 @@ $paymentMethodId = isset($data['payment_method_id']) ? (int)$data['payment_metho
 $cartId          = isset($data['cart_id']) ? (int)$data['cart_id'] : 0;
 $itemsInput      = $data['items'] ?? [];
  
+$raw = file_get_contents("php://input");
+error_log("create_order.php body: " . $raw);
+$data = json_decode($raw, true);
+
 if ($userId <= 0) {
-    fail("Kulang ang impormasyon.");
+    fail("Kulang ang impormasyon: walang user_id.");
 }
 // Demo mode: address and payment method are optional
 $addressId       = $addressId > 0 ? $addressId : null;
 $paymentMethodId = $paymentMethodId > 0 ? $paymentMethodId : null;
 if ($cartId <= 0 && (!is_array($itemsInput) || count($itemsInput) === 0)) {
-    fail("Kulang ang impormasyon.");
+    fail("Kulang ang impormasyon: walang cart_id.");
 }
  
 // Direct order: merge duplicate item_ids (e.g. item 5 listed twice) into one line
