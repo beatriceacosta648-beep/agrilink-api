@@ -25,9 +25,12 @@ $paymentMethodId = isset($data['payment_method_id']) ? (int)$data['payment_metho
 $cartId          = isset($data['cart_id']) ? (int)$data['cart_id'] : 0;
 $itemsInput      = $data['items'] ?? [];
  
-if ($userId <= 0 || $addressId <= 0 || $paymentMethodId <= 0) {
+if ($userId <= 0) {
     fail("Kulang ang impormasyon.");
 }
+// Demo mode: address and payment method are optional
+$addressId       = $addressId > 0 ? $addressId : null;
+$paymentMethodId = $paymentMethodId > 0 ? $paymentMethodId : null;
 if ($cartId <= 0 && (!is_array($itemsInput) || count($itemsInput) === 0)) {
     fail("Kulang ang impormasyon.");
 }
@@ -82,7 +85,8 @@ try {
     // Always lock items in the same order to avoid deadlocks between simultaneous orders
     ksort($wanted);
  
-    // The address must belong to this user
+   // The address must belong to this user (only checked if one was sent)
+if ($addressId !== null) {
     $stmt = $conn->prepare("SELECT address_id FROM address WHERE address_id = ? AND user_id = ?");
     $stmt->bind_param("ii", $addressId, $userId);
     $stmt->execute();
@@ -90,8 +94,10 @@ try {
         throw new RuntimeException("Hindi nahanap ang address para sa user na ito.");
     }
     $stmt->close();
- 
-    // The payment method must exist
+}
+
+// The payment method must exist (only checked if one was sent)
+if ($paymentMethodId !== null) {
     $stmt = $conn->prepare("SELECT payment_methods_id FROM payment_methods WHERE payment_methods_id = ?");
     $stmt->bind_param("i", $paymentMethodId);
     $stmt->execute();
@@ -99,6 +105,7 @@ try {
         throw new RuntimeException("Hindi tama ang payment method.");
     }
     $stmt->close();
+}
  
     // Look up every item (price and stock come from the database, never from the app)
     $itemStmt = $conn->prepare(
