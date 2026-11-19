@@ -136,12 +136,12 @@ try {
 } catch (mysqli_sql_exception $e) {
     $conn->rollback();
     error_log("create_group_buy.php: " . $e->getMessage());
-    fail("Hindi magawa ang group buy.");
+    fail("Hindi magawa ang group buy.", ["debug" => $e->getMessage()]);
 } catch (RuntimeException $e) {
     $conn->rollback();
     fail($e->getMessage());
 } catch (Throwable $e) {
     $conn->rollback();
     error_log("create_group_buy.php: " . $e->getMessage());
-    fail("Hindi magawa ang group buy.");
+    fail("Hindi magawa ang group buy.", ["debug" => $e->getMessage()]);
 }
